@@ -1,0 +1,153 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isEmailVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(resourceData) {
+      return isSignedIn() && resourceData.ownerId == request.auth.uid;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+    
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // --- Properties ---
+    function isValidProperty(data) {
+      return data.name is string && data.name.size() > 0 && data.name.size() <= 200
+          && data.address is string && data.address.size() > 0 && data.address.size() <= 500
+          && data.type in ['commercial', 'residential', 'office']
+          && data.ownerId == request.auth.uid;
+    }
+
+    match /properties/{propertyId} {
+      allow read: if isSignedIn() && isOwner(existing());
+      allow create: if isEmailVerified() && isValidId(propertyId) && isValidProperty(incoming());
+      allow update: if isEmailVerified() && isOwner(existing()) && isValidProperty(incoming())
+                       && incoming().ownerId == existing().ownerId;
+      allow delete: if isEmailVerified() && isOwner(existing());
+    }
+
+    // --- Units ---
+    // Note: Units reference propertyId. We should check if user owns that property.
+    function ownsParentProperty(propertyId) {
+      return get(/databases/$(database)/documents/properties/$(propertyId)).data.ownerId == request.auth.uid;
+    }
+
+    function isValidUnit(data) {
+      return data.propertyId is string && isValidId(data.propertyId)
+          && data.unitNumber is string && data.unitNumber.size() > 0 && data.unitNumber.size() <= 50
+          && data.status in ['vacant', 'occupied', 'maintenance']
+          && (data.area == null || data.area is number)
+          && (data.baseMonthlyRent == null || data.baseMonthlyRent is number)
+          && (data.currency == null || data.currency in ['USD', 'SAR', 'YER']);
+    }
+
+    match /units/{unitId} {
+      allow read: if isSignedIn() && isOwner(existing());
+      allow create: if isEmailVerified() && isValidId(unitId) && isValidUnit(incoming()) && ownsParentProperty(incoming().propertyId);
+      allow update: if isEmailVerified() && isOwner(existing()) && isValidUnit(incoming()) && incoming().propertyId == existing().propertyId;
+      allow delete: if isEmailVerified() && isOwner(existing());
+    }
+
+    // --- Contracts ---
+    function isValidContract(data) {
+      return data.unitId is string && isValidId(data.unitId)
+          && data.tenantName is string && data.tenantName.size() > 0 && data.tenantName.size() <= 200
+          && data.ownerId == request.auth.uid
+          && data.status in ['active', 'expired', 'terminated']
+          && data.startDate is timestamp
+          && data.endDate is timestamp
+          && data.baseRent is number
+          && data.baseCurrency in ['USD', 'SAR', 'YER'];
+    }
+
+    match /contracts/{contractId} {
+      allow read: if isSignedIn() && isOwner(existing());
+      allow create: if isEmailVerified() && isValidId(contractId) && isValidContract(incoming());
+      allow update: if isEmailVerified() && isOwner(existing()) && isValidContract(incoming())
+                       && incoming().ownerId == existing().ownerId;
+      allow delete: if isEmailVerified() && isOwner(existing());
+    }
+
+    // --- Payments ---
+    function isValidPayment(data) {
+      return data.contractId is string && isValidId(data.contractId)
+          && data.amountPaidBase is number
+          && data.paymentDate is timestamp;
+    }
+
+    match /payments/{paymentId} {
+      allow read: if isSignedIn() && isOwner(existing());
+      allow create: if isEmailVerified() && isValidId(paymentId) && isValidPayment(incoming());
+      allow delete: if isEmailVerified() && isOwner(existing());
+    }
+
+    // --- Tenants ---
+    function isValidTenant(data) {
+      return data.name is string && data.name.size() > 0 
+          && data.phone is string && data.phone.size() > 0
+          && data.ownerId == request.auth.uid;
+    }
+
+    match /tenants/{tenantId} {
+      allow read: if isSignedIn() && isOwner(existing());
+      allow create: if isEmailVerified() && isValidId(tenantId) && isValidTenant(incoming());
+      allow update: if isEmailVerified() && isOwner(existing()) && isValidTenant(incoming())
+                       && incoming().ownerId == existing().ownerId;
+      allow delete: if isEmailVerified() && isOwner(existing());
+    }
+
+    // --- Messages ---
+    function isValidMessage(data) {
+      return data.contractId is string && data.tenantId is string
+          && data.content is string && data.content.size() > 0
+          && data.ownerId == request.auth.uid;
+    }
+
+    match /messages/{messageId} {
+      allow read: if isSignedIn() && isOwner(existing());
+      allow create: if isEmailVerified() && isValidId(messageId) && isValidMessage(incoming());
+      allow delete: if isEmailVerified() && isOwner(existing());
+    }
+
+    // --- Maintenance ---
+    function isValidMaintenance(data) {
+      return data.propertyId is string && data.description is string
+          && data.cost is number && data.ownerId == request.auth.uid;
+    }
+
+    match /maintenance/{recordId} {
+      allow read: if isSignedIn() && isOwner(existing());
+      allow create: if isEmailVerified() && isValidId(recordId) && isValidMaintenance(incoming());
+      allow update: if isEmailVerified() && isOwner(existing()) && isValidMaintenance(incoming())
+                       && incoming().ownerId == existing().ownerId;
+      allow delete: if isEmailVerified() && isOwner(existing());
+    }
+
+    // --- Exchange Rates ---
+    match /exchange_rates/{rateId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn(); // Users update their own rates cache in this simplified multi-tenant model
+    }
+  }
+}

@@ -1,0 +1,151 @@
+{
+  "entities": {
+    "Property": {
+      "title": "Property",
+      "description": "Details about a building or estate",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "address": { "type": "string" },
+        "type": { "type": "string", "enum": ["commercial", "residential", "office"] },
+        "ownerId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "address", "type", "ownerId"]
+    },
+    "Unit": {
+      "title": "Unit",
+      "description": "A specific office, apartment, or shop within a property",
+      "type": "object",
+      "properties": {
+        "propertyId": { "type": "string" },
+        "unitNumber": { "type": "string" },
+        "status": { "type": "string", "enum": ["vacant", "occupied", "maintenance"] },
+        "area": { "type": "number", "description": "Square meters" },
+        "baseMonthlyRent": { "type": "number" },
+        "currency": { "type": "string", "enum": ["USD", "SAR", "YER"] }
+      },
+      "required": ["propertyId", "unitNumber", "status"]
+    },
+    "Contract": {
+      "title": "Rental Contract",
+      "description": "Agreement between owner and tenant",
+      "type": "object",
+      "properties": {
+        "unitId": { "type": "string" },
+        "tenantName": { "type": "string" },
+        "tenantPhone": { "type": "string" },
+        "startDate": { "type": "string", "format": "date-time" },
+        "endDate": { "type": "string", "format": "date-time" },
+        "baseRent": { "type": "number", "description": "Rent in base currency" },
+        "baseCurrency": { "type": "string", "enum": ["USD", "SAR"] },
+        "conversionRate": { "type": "number", "description": "Reference rate to YER" },
+        "escalationPercentage": { "type": "number", "description": "Yearly increase" },
+        "status": { "type": "string", "enum": ["active", "expired", "terminated"] },
+        "ownerId": { "type": "string" }
+      },
+      "required": ["unitId", "tenantName", "startDate", "endDate", "baseRent", "baseCurrency", "ownerId"]
+    },
+    "Tenant": {
+      "title": "Tenant",
+      "description": "Information about a tenant",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "phone": { "type": "string" },
+        "idNumber": { "type": "string" },
+        "ownerId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "phone", "ownerId"]
+    },
+    "Message": {
+      "title": "Message",
+      "description": "Communication log with tenant",
+      "type": "object",
+      "properties": {
+        "contractId": { "type": "string" },
+        "tenantId": { "type": "string" },
+        "senderId": { "type": "string" },
+        "content": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "ownerId": { "type": "string" }
+      },
+      "required": ["contractId", "tenantId", "content", "ownerId"]
+    },
+    "MaintenanceRecord": {
+      "title": "Maintenance Record",
+      "description": "Property maintenance expenses",
+      "type": "object",
+      "properties": {
+        "propertyId": { "type": "string" },
+        "description": { "type": "string" },
+        "cost": { "type": "number" },
+        "currency": { "type": "string", "enum": ["USD", "SAR", "YER"] },
+        "date": { "type": "string", "format": "date-time" },
+        "ownerId": { "type": "string" }
+      },
+      "required": ["propertyId", "description", "cost", "currency", "ownerId"]
+    },
+    "ExchangeRate": {
+      "title": "Exchange Rate",
+      "description": "Daily currency exchange rates",
+      "type": "object",
+      "properties": {
+        "base": { "type": "string", "enum": ["USD", "SAR", "YER"] },
+        "rates": { "type": "object" },
+        "lastUpdated": { "type": "string", "format": "date-time" }
+      },
+      "required": ["base", "rates", "lastUpdated"]
+    },
+    "Payment": {
+      "title": "Payment",
+      "description": "Rent payment record",
+      "type": "object",
+      "properties": {
+        "contractId": { "type": "string" },
+        "amountPaidBase": { "type": "number" },
+        "amountPaidLocal": { "type": "number" },
+        "exchangeRateAtPayment": { "type": "number" },
+        "paymentDate": { "type": "string", "format": "date-time" },
+        "monthCovered": { "type": "string", "description": "YYYY-MM" }
+      },
+      "required": ["contractId", "amountPaidBase", "paymentDate"]
+    }
+  },
+  "firestore": {
+    "/properties/{propertyId}": {
+      "schema": "Property",
+      "description": "Root collection for properties"
+    },
+    "/units/{unitId}": {
+      "schema": "Unit",
+      "description": "Global units collection or subcollection"
+    },
+    "/contracts/{contractId}": {
+      "schema": "Contract",
+      "description": "Active and past contracts"
+    },
+    "/payments/{paymentId}": {
+      "schema": "Payment",
+      "description": "Historical payments"
+    },
+    "/tenants/{tenantId}": {
+      "schema": "Tenant",
+      "description": "Tenant registry"
+    },
+    "/messages/{messageId}": {
+      "schema": "Message",
+      "description": "Communication logs"
+    },
+    "/maintenance/{recordId}": {
+      "schema": "MaintenanceRecord",
+      "description": "Property maintenance expenses"
+    },
+    "/exchange_rates/{rateId}": {
+      "schema": "ExchangeRate",
+      "description": "Daily cached exchange rates"
+    }
+  }
+}
