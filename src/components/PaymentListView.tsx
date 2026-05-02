@@ -1,24 +1,27 @@
-import React, { useEffect, useState } from 'react';
-import { collection, query, where, getDocs, addDoc, doc, deleteDoc, Timestamp } from 'firebase/firestore';
-import { db, handleFirestoreError } from '../lib/firebase';
-import { useAuth } from '../context/AuthContext';
+import React, { useState, useEffect } from 'react';
+import { Timestamp } from 'firebase/firestore';
 import { useLanguage } from '../context/LanguageContext';
-import { Plus, Trash2, DollarSign, Calendar, CreditCard, Search, FileText } from 'lucide-react';
-import { Payment, Contract, Unit, ExchangeRate } from '../types';
+import { Plus, Trash2, Search } from 'lucide-react';
+import { ExchangeRate } from '../types';
 import { currencyService } from '../services/currencyService';
 import { motion, AnimatePresence } from 'motion/react';
 import { format } from 'date-fns';
-import { cn } from '../lib/utils';
+import { usePayments } from '../hooks/usePayments';
+import { useContracts } from '../hooks/useContracts';
 
 export default function PaymentListView() {
-  const { user } = useAuth();
   const { t } = useLanguage();
-  const [payments, setPayments] = useState<Payment[]>([]);
-  const [contracts, setContracts] = useState<Contract[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { payments, isLoading: pLoading, addPayment, deletePayment } = usePayments();
+  const { contracts, isLoading: cLoading } = useContracts();
+  
+  const loading = pLoading || cLoading;
   const [isAdding, setIsAdding] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [globalRates, setGlobalRates] = useState<ExchangeRate | null>(null);
+
+  useEffect(() => {
+    currencyService.getLatestRates().then(setGlobalRates).catch(console.error);
+  }, []);
 
   const [formData, setFormData] = useState({
     contractId: '',
@@ -29,49 +32,15 @@ export default function PaymentListView() {
     monthCovered: format(new Date(), 'yyyy-MM'),
   });
 
-  const fetchData = async () => {
-    if (!user) return;
-    try {
-      const cQ = query(collection(db, 'contracts'), where('ownerId', '==', user.uid));
-      const cSnap = await getDocs(cQ);
-      const cData = cSnap.docs.map(doc => ({ ...doc.data(), id: doc.id } as Contract));
-      setContracts(cData);
-
-      const pQ = query(collection(db, 'payments'), where('ownerId', '==', user.uid));
-      const pSnap = await getDocs(pQ);
-      const userPayments = pSnap.docs.map(doc => ({ ...doc.data(), id: doc.id } as Payment));
-      
-      setPayments(userPayments.sort((a, b) => {
-        const dateA = a.paymentDate instanceof Timestamp ? a.paymentDate.toDate() : new Date(a.paymentDate);
-        const dateB = b.paymentDate instanceof Timestamp ? b.paymentDate.toDate() : new Date(b.paymentDate);
-        return dateB.getTime() - dateA.getTime();
-      }));
-
-      // Fetch global rates
-      const rates = await currencyService.getLatestRates();
-      setGlobalRates(rates);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchData();
-  }, [user]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
     try {
       const paymentData = {
         ...formData,
         paymentDate: Timestamp.fromDate(new Date(formData.paymentDate)),
-        ownerId: user.uid,
       };
       
-      await addDoc(collection(db, 'payments'), paymentData);
+      await addPayment(paymentData);
       setIsAdding(false);
       setFormData({
         contractId: '',
@@ -81,19 +50,17 @@ export default function PaymentListView() {
         paymentDate: format(new Date(), 'yyyy-MM-dd'),
         monthCovered: format(new Date(), 'yyyy-MM'),
       });
-      fetchData();
     } catch (err) {
-      handleFirestoreError(err, 'create', 'payments');
+      // Error handled in hook
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDeleteClick = async (id: string) => {
     if (!confirm('هل أنت متأكد من حذف هذا السجل المالي؟')) return;
     try {
-      await deleteDoc(doc(db, 'payments', id));
-      fetchData();
+      await deletePayment(id);
     } catch (err) {
-      handleFirestoreError(err, 'delete', `payments/${id}`);
+      // Error handled in hook
     }
   };
 
@@ -282,7 +249,7 @@ export default function PaymentListView() {
                     </td>
                     <td className="px-8 py-5">
                        <button 
-                         onClick={() => handleDelete(payment.id)}
+                         onClick={() => handleDeleteClick(payment.id)}
                          className="p-2 text-slate-700 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
                        >
                          <Trash2 className="w-4 h-4" />

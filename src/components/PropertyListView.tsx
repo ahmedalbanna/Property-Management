@@ -1,17 +1,19 @@
-import React, { useEffect, useState } from 'react';
-import { collection, query, where, getDocs, addDoc, Timestamp, deleteDoc, doc } from 'firebase/firestore';
-import { db, handleFirestoreError } from '../lib/firebase';
-import { useAuth } from '../context/AuthContext';
+import React, { useState } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { Building2, Plus, MapPin, Trash2, Home, Briefcase, Building } from 'lucide-react';
-import { Property, PropertyType } from '../types';
+import { PropertyType } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
+import { useProperties } from '../hooks/useProperties';
 
 export default function PropertyListView() {
-  const { user } = useAuth();
   const { t } = useLanguage();
-  const [properties, setProperties] = useState<Property[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { 
+    properties, 
+    isLoading: loading, 
+    addProperty, 
+    deleteProperty 
+  } = useProperties();
+  
   const [isAdding, setIsAdding] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -19,48 +21,23 @@ export default function PropertyListView() {
     type: 'residential' as PropertyType,
   });
 
-  const fetchProperties = async () => {
-    if (!user) return;
-    try {
-      const q = query(collection(db, 'properties'), where('ownerId', '==', user.uid));
-      const querySnapshot = await getDocs(q);
-      const data = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Property));
-      setProperties(data);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchProperties();
-  }, [user]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
     try {
-      await addDoc(collection(db, 'properties'), {
-        ...formData,
-        ownerId: user.uid,
-        createdAt: Timestamp.now(),
-      });
+      await addProperty(formData);
       setIsAdding(false);
       setFormData({ name: '', address: '', type: 'residential' });
-      fetchProperties();
     } catch (err) {
-      handleFirestoreError(err, 'create', 'properties');
+      // Error handled in hook
     }
   };
 
   const handleDelete = async (id: string) => {
     if (!confirm('هل أنت متأكد من حذف هذا العقار؟')) return;
     try {
-      await deleteDoc(doc(db, 'properties', id));
-      fetchProperties();
+      await deleteProperty(id);
     } catch (err) {
-      handleFirestoreError(err, 'delete', `properties/${id}`);
+      // Error handled in hook
     }
   };
 

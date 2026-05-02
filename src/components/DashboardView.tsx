@@ -1,70 +1,58 @@
-import React, { useEffect, useState } from 'react';
-import { collection, query, where, getDocs, Timestamp } from 'firebase/firestore';
-import { db } from '../lib/firebase';
-import { useAuth } from '../context/AuthContext';
+import React, { useState, useEffect } from 'react';
+import { Timestamp } from 'firebase/firestore';
 import { useLanguage } from '../context/LanguageContext';
 import { Building2, Box, FileText, AlertCircle, TrendingUp, Calendar, CreditCard } from 'lucide-react';
-import { Contract, Unit, Payment, ExchangeRate } from '../types';
+import { ExchangeRate } from '../types';
 import { currencyService } from '../services/currencyService';
 import { addDays, isAfter, isBefore } from 'date-fns';
+import { useUnits } from '../hooks/useUnits';
+import { useContracts } from '../hooks/useContracts';
+import { usePayments } from '../hooks/usePayments';
 
 export default function DashboardView() {
-  const { user } = useAuth();
   const { t } = useLanguage();
-  const [stats, setStats] = useState({
-    totalUnits: 0,
-    occupiedUnits: 0,
-    activeContracts: 0,
-    expiringSoon: 0,
-    totalRevenueYER: 0,
-  });
+  const { units, isLoading: uLoading } = useUnits();
+  const { contracts, isLoading: cLoading } = useContracts();
+  const { payments, isLoading: pLoading } = usePayments();
   const [rates, setRates] = useState<ExchangeRate | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loadingRates, setLoadingRates] = useState(true);
 
   useEffect(() => {
-    async function fetchStats() {
-      if (!user) return;
-      try {
-        const unitsSnap = await getDocs(query(collection(db, 'units'), where('ownerId', '==', user.uid)));
-        const units = unitsSnap.docs.map(doc => doc.data() as Unit);
-        
-        const contractsSnap = await getDocs(query(collection(db, 'contracts'), where('ownerId', '==', user.uid)));
-        const contracts = contractsSnap.docs.map(doc => ({ ...doc.data(), id: doc.id } as Contract));
+    currencyService.getLatestRates()
+      .then(setRates)
+      .finally(() => setLoadingRates(false));
+  }, []);
 
-        const activeBatch = contracts.filter(c => c.status === 'active');
-        
-        const now = new Date();
-        const ninetyDaysFromNow = addDays(now, 90);
-        
-        const expiring = activeBatch.filter(c => {
-          const endDate = c.endDate instanceof Timestamp ? c.endDate.toDate() : new Date(c.endDate);
-          return isAfter(endDate, now) && isBefore(endDate, ninetyDaysFromNow);
-        });
+  const stats = React.useMemo(() => {
+    if (!units || !contracts || !payments) return null;
 
-        // Fetch payments for revenue
-        const paymentsSnap = await getDocs(query(collection(db, 'payments'), where('ownerId', '==', user.uid)));
-        const userPayments = paymentsSnap.docs.map(doc => doc.data() as Payment);
-        const totalRev = userPayments.reduce((acc, p) => acc + (p.amountPaidLocal || 0), 0);
+    const activeBatch = contracts.filter(c => c.status === 'active');
+    const now = new Date();
+    const ninetyDaysFromNow = addDays(now, 90);
+    
+    const expiring = activeBatch.filter(c => {
+      const endDate = c.endDate instanceof Timestamp ? c.endDate.toDate() : new Date(c.endDate);
+      return isAfter(endDate, now) && isBefore(endDate, ninetyDaysFromNow);
+    });
 
-        setStats({
-          totalUnits: units.length,
-          occupiedUnits: units.filter(u => u.status === 'occupied').length,
-          activeContracts: activeBatch.length,
-          expiringSoon: expiring.length,
-          totalRevenueYER: totalRev,
-        });
+    const totalRev = payments.reduce((acc, p) => acc + (p.amountPaidLocal || 0), 0);
 
-        // Fetch rates
-        const latestRates = await currencyService.getLatestRates();
-        setRates(latestRates);
-      } catch (error) {
-        console.error("Error fetching stats:", error);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchStats();
-  }, [user]);
+    return {
+      totalUnits: units.length,
+      occupiedUnits: units.filter(u => u.status === 'occupied').length,
+      activeContracts: activeBatch.length,
+      expiringSoon: expiring.length,
+      totalRevenueYER: totalRev,
+    };
+  }, [units, contracts, payments]);
+
+  const loading = uLoading || cLoading || pLoading || loadingRates;
+
+  if (loading || !stats) return (
+    <div className="flex items-center justify-center h-64">
+      <div className="text-slate-500 font-mono animate-pulse uppercase tracking-widest text-xs">جمع البيانات الهندسية...</div>
+    </div>
+  );
 
   const cards = [
     { label: t('dashboard.occupancy'), value: `${stats.totalUnits ? Math.round((stats.occupiedUnits / stats.totalUnits) * 100) : 0}%`, icon: Box, color: 'text-indigo-400', bg: 'bg-indigo-500/10' },

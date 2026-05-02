@@ -1,19 +1,18 @@
-import React, { useEffect, useState } from 'react';
-import { collection, query, where, getDocs, addDoc, doc, deleteDoc } from 'firebase/firestore';
-import { db, handleFirestoreError } from '../lib/firebase';
-import { useAuth } from '../context/AuthContext';
+import React, { useState } from 'react';
 import { useLanguage } from '../context/LanguageContext';
-import { Plus, Trash2, Box, Info } from 'lucide-react';
-import { Unit, UnitStatus, Property, Currency } from '../types';
+import { Plus, Trash2, Info } from 'lucide-react';
+import { UnitStatus, Currency } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../lib/utils';
+import { useUnits } from '../hooks/useUnits';
+import { useProperties } from '../hooks/useProperties';
 
 export default function UnitListView() {
-  const { user } = useAuth();
   const { t } = useLanguage();
-  const [units, setUnits] = useState<Unit[]>([]);
-  const [properties, setProperties] = useState<Property[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { properties, isLoading: pLoading } = useProperties();
+  const { units, isLoading: uLoading, addUnit, deleteUnit } = useUnits();
+  
+  const loading = pLoading || uLoading;
   const [isAdding, setIsAdding] = useState(false);
   const [formData, setFormData] = useState({
     propertyId: '',
@@ -24,48 +23,23 @@ export default function UnitListView() {
     currency: 'USD' as Currency,
   });
 
-  const fetchData = async () => {
-    if (!user) return;
-    try {
-      const pQ = query(collection(db, 'properties'), where('ownerId', '==', user.uid));
-      const pSnap = await getDocs(pQ);
-      const pData = pSnap.docs.map(doc => ({ ...doc.data(), id: doc.id } as Property));
-      setProperties(pData);
-
-      const uQ = query(collection(db, 'units'), where('ownerId', '==', user.uid));
-      const uSnap = await getDocs(uQ);
-      setUnits(uSnap.docs.map(doc => ({ ...doc.data(), id: doc.id } as Unit)));
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchData();
-  }, [user]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
     try {
-      await addDoc(collection(db, 'units'), { ...formData, ownerId: user.uid });
+      await addUnit(formData);
       setIsAdding(false);
       setFormData({ propertyId: '', unitNumber: '', status: 'vacant', area: 0, baseMonthlyRent: 0, currency: 'USD' });
-      fetchData();
     } catch (err) {
-      handleFirestoreError(err, 'create', 'units');
+      // Error handled in hook
     }
   };
 
   const handleDelete = async (id: string) => {
     if (!confirm('هل أنت متأكد من حذف هذه الوحدة؟')) return;
     try {
-      await deleteDoc(doc(db, 'units', id));
-      fetchData();
+      await deleteUnit(id);
     } catch (err) {
-      handleFirestoreError(err, 'delete', `units/${id}`);
+      // Error handled in hook
     }
   };
 

@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { collection, query, where, getDocs, addDoc, doc, deleteDoc, updateDoc, Timestamp, orderBy } from 'firebase/firestore';
+import React, { useState, useEffect } from 'react';
+import { collection, query, where, getDocs, addDoc, Timestamp, orderBy } from 'firebase/firestore';
 import { db, handleFirestoreError } from '../lib/firebase';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -8,13 +8,14 @@ import { Tenant, Contract, Payment, Message } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
 import { format } from 'date-fns';
 import { cn } from '../lib/utils';
+import { useTenants } from '../hooks/useTenants';
 
 export default function TenantListView() {
   const { user } = useAuth();
   const { t } = useLanguage();
-  const [tenants, setTenants] = useState<Tenant[]>([]);
+  const { tenants, isLoading: loading, addTenant, deleteTenant: deleteTenantHook } = useTenants();
+  
   const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null);
-  const [loading, setLoading] = useState(true);
   const [isAdding, setIsAdding] = useState(false);
 
   // Form State
@@ -30,19 +31,6 @@ export default function TenantListView() {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
-
-  const fetchData = async () => {
-    if (!user) return;
-    try {
-      const q = query(collection(db, 'tenants'), where('ownerId', '==', user.uid));
-      const snap = await getDocs(q);
-      setTenants(snap.docs.map(doc => ({ ...doc.data(), id: doc.id } as Tenant)));
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const fetchTenantDetails = async (tenant: Tenant) => {
     try {
@@ -75,10 +63,6 @@ export default function TenantListView() {
   };
 
   useEffect(() => {
-    fetchData();
-  }, [user]);
-
-  useEffect(() => {
     if (selectedTenant) {
       fetchTenantDetails(selectedTenant);
     }
@@ -86,30 +70,22 @@ export default function TenantListView() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
     try {
-      const tenantData = {
-        ...formData,
-        ownerId: user.uid,
-        createdAt: Timestamp.now(),
-      };
-      await addDoc(collection(db, 'tenants'), tenantData);
+      await addTenant(formData);
       setIsAdding(false);
       setFormData({ name: '', email: '', phone: '', idNumber: '' });
-      fetchData();
     } catch (err) {
-      handleFirestoreError(err, 'create', 'tenants');
+      // Error handled in hook
     }
   };
 
   const deleteTenant = async (id: string) => {
     if (!confirm('سيتم حذف سجل المستأجر نهائياً. هل أنت متأكد؟')) return;
     try {
-      await deleteDoc(doc(db, 'tenants', id));
+      await deleteTenantHook(id);
       if (selectedTenant?.id === id) setSelectedTenant(null);
-      fetchData();
     } catch (err) {
-      handleFirestoreError(err, 'delete', `tenants/${id}`);
+      // Error handled in hook
     }
   };
 

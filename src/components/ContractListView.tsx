@@ -1,22 +1,24 @@
-import React, { useEffect, useState } from 'react';
-import { collection, query, where, getDocs, addDoc, doc, deleteDoc, updateDoc, Timestamp } from 'firebase/firestore';
-import { db, handleFirestoreError } from '../lib/firebase';
-import { useAuth } from '../context/AuthContext';
+import React, { useState } from 'react';
+import { Timestamp } from 'firebase/firestore';
 import { useLanguage } from '../context/LanguageContext';
-import { Plus, Trash2, Calendar, DollarSign, ArrowRightLeft, User, Link as LinkIcon, BadgeAlert, FileText } from 'lucide-react';
-import { Contract, Unit, Property, Currency, ContractStatus, Tenant } from '../types';
+import { Plus, Trash2, Calendar, DollarSign, User, BadgeAlert, FileText } from 'lucide-react';
+import { Currency, ContractStatus } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
 import { format, differenceInDays } from 'date-fns';
 import { cn } from '../lib/utils';
+import { useContracts } from '../hooks/useContracts';
+import { useUnits } from '../hooks/useUnits';
+import { useProperties } from '../hooks/useProperties';
+import { useTenants } from '../hooks/useTenants';
 
 export default function ContractListView() {
-  const { user } = useAuth();
   const { t } = useLanguage();
-  const [contracts, setContracts] = useState<Contract[]>([]);
-  const [units, setUnits] = useState<Unit[]>([]);
-  const [properties, setProperties] = useState<Property[]>([]);
-  const [tenants, setTenants] = useState<Tenant[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { contracts, isLoading: cLoading, addContract, deleteContract } = useContracts();
+  const { units, isLoading: uLoading } = useUnits();
+  const { properties, isLoading: pLoading } = useProperties();
+  const { tenants, isLoading: tLoading } = useTenants();
+
+  const loading = cLoading || uLoading || pLoading || tLoading;
   const [isAdding, setIsAdding] = useState(false);
   
   const [formData, setFormData] = useState({
@@ -28,57 +30,21 @@ export default function ContractListView() {
     endDate: format(new Date(new Date().setFullYear(new Date().getFullYear() + 1)), 'yyyy-MM-dd'),
     baseRent: 0,
     baseCurrency: 'USD' as Currency,
-    conversionRate: 1, // Reference rate to YER
+    conversionRate: 1,
     escalationPercentage: 10,
     status: 'active' as ContractStatus,
   });
 
-  const fetchData = async () => {
-    if (!user) return;
-    try {
-      const pQ = query(collection(db, 'properties'), where('ownerId', '==', user.uid));
-      const pSnap = await getDocs(pQ);
-      const pData = pSnap.docs.map(doc => ({ ...doc.data(), id: doc.id } as Property));
-      setProperties(pData);
-
-      const uQ = query(collection(db, 'units'), where('ownerId', '==', user.uid));
-      const uSnap = await getDocs(uQ);
-      setUnits(uSnap.docs.map(doc => ({ ...doc.data(), id: doc.id } as Unit)));
-
-      const cQ = query(collection(db, 'contracts'), where('ownerId', '==', user.uid));
-      const cSnap = await getDocs(cQ);
-      setContracts(cSnap.docs.map(doc => ({ ...doc.data(), id: doc.id } as Contract)));
-
-      const tQ = query(collection(db, 'tenants'), where('ownerId', '==', user.uid));
-      const tSnap = await getDocs(tQ);
-      setTenants(tSnap.docs.map(doc => ({ ...doc.data(), id: doc.id } as Tenant)));
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchData();
-  }, [user]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
     try {
       const contractData = {
         ...formData,
         startDate: Timestamp.fromDate(new Date(formData.startDate)),
         endDate: Timestamp.fromDate(new Date(formData.endDate)),
-        ownerId: user.uid,
       };
       
-      const docRef = await addDoc(collection(db, 'contracts'), contractData);
-      
-      // Update unit status to occupied
-      await updateDoc(doc(db, 'units', formData.unitId), { status: 'occupied' });
-      
+      await addContract(contractData);
       setIsAdding(false);
       setFormData({ 
         unitId: '', tenantId: '', tenantName: '', tenantPhone: '', 
@@ -86,23 +52,17 @@ export default function ContractListView() {
         endDate: format(new Date(new Date().setFullYear(new Date().getFullYear() + 1)), 'yyyy-MM-dd'),
         baseRent: 0, baseCurrency: 'USD', conversionRate: 1, escalationPercentage: 10, status: 'active' 
       });
-      fetchData();
     } catch (err) {
-      handleFirestoreError(err, 'create', 'contracts');
+      // Error handled in hook
     }
   };
 
-  const handleDelete = async (contract: Contract) => {
+  const handleDeleteClick = async (contract: any) => {
     if (!confirm('هل أنت متأكد من حذف هذا العقد؟')) return;
     try {
-      await deleteDoc(doc(db, 'contracts', contract.id));
-      // Optionally reset unit status if it was active
-      if (contract.status === 'active') {
-         await updateDoc(doc(db, 'units', contract.unitId), { status: 'vacant' });
-      }
-      fetchData();
+      await deleteContract(contract.id);
     } catch (err) {
-      handleFirestoreError(err, 'delete', `contracts/${contract.id}`);
+      // Error handled in hook
     }
   };
 
@@ -331,7 +291,7 @@ export default function ContractListView() {
                         </div>
                      </div>
                      <button 
-                       onClick={() => handleDelete(contract)}
+                       onClick={() => handleDeleteClick(contract)}
                        className="p-3 text-slate-700 hover:text-red-500 transition-colors bg-slate-950 border border-border rounded-lg hover:border-red-500/50"
                      >
                        <Trash2 className="w-5 h-5" />

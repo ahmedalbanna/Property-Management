@@ -1,20 +1,19 @@
-import React, { useEffect, useState } from 'react';
-import { collection, query, where, getDocs, addDoc, doc, deleteDoc, Timestamp } from 'firebase/firestore';
-import { db, handleFirestoreError } from '../lib/firebase';
-import { useAuth } from '../context/AuthContext';
+import React, { useState } from 'react';
+import { Timestamp } from 'firebase/firestore';
 import { useLanguage } from '../context/LanguageContext';
-import { Plus, Trash2, Wallet, Building2, Calendar, FileText } from 'lucide-react';
-import { MaintenanceRecord, Property, Currency } from '../types';
+import { Plus, Trash2 } from 'lucide-react';
+import { Currency } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
 import { format } from 'date-fns';
-import { cn } from '../lib/utils';
+import { useMaintenance } from '../hooks/useMaintenance';
+import { useProperties } from '../hooks/useProperties';
 
 export default function MaintenanceListView() {
-  const { user } = useAuth();
   const { t } = useLanguage();
-  const [records, setRecords] = useState<MaintenanceRecord[]>([]);
-  const [properties, setProperties] = useState<Property[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { records, isLoading: mLoading, addRecord, deleteRecord } = useMaintenance();
+  const { properties, isLoading: pLoading } = useProperties();
+  
+  const loading = mLoading || pLoading;
   const [isAdding, setIsAdding] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -25,52 +24,27 @@ export default function MaintenanceListView() {
     date: format(new Date(), 'yyyy-MM-dd'),
   });
 
-  const fetchData = async () => {
-    if (!user) return;
-    try {
-      const pQ = query(collection(db, 'properties'), where('ownerId', '==', user.uid));
-      const pSnap = await getDocs(pQ);
-      setProperties(pSnap.docs.map(doc => ({ ...doc.data(), id: doc.id } as Property)));
-
-      const rQ = query(collection(db, 'maintenance'), where('ownerId', '==', user.uid));
-      const rSnap = await getDocs(rQ);
-      setRecords(rSnap.docs.map(doc => ({ ...doc.data(), id: doc.id } as MaintenanceRecord)));
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchData();
-  }, [user]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
     try {
       const recordData = {
         ...formData,
         date: Timestamp.fromDate(new Date(formData.date)),
-        ownerId: user.uid,
       };
-      await addDoc(collection(db, 'maintenance'), recordData);
+      await addRecord(recordData);
       setIsAdding(false);
       setFormData({ propertyId: '', description: '', cost: 0, currency: 'YER', date: format(new Date(), 'yyyy-MM-dd') });
-      fetchData();
     } catch (err) {
-      handleFirestoreError(err, 'create', 'maintenance');
+      // Error handled in hook
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDeleteClick = async (id: string) => {
     if (!confirm('هل أنت متأكد من حذف هذا السجل المصروفي؟')) return;
     try {
-      await deleteDoc(doc(db, 'maintenance', id));
-      fetchData();
+      await deleteRecord(id);
     } catch (err) {
-      handleFirestoreError(err, 'delete', `maintenance/${id}`);
+      // Error handled in hook
     }
   };
 
@@ -192,7 +166,7 @@ export default function MaintenanceListView() {
                        {record.cost.toLocaleString()} <span className="text-[9px] text-slate-600 uppercase ml-1">{record.currency}</span>
                     </td>
                     <td className="px-8 py-5">
-                       <button onClick={() => handleDelete(record.id)} className="p-2 text-slate-700 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100">
+                       <button onClick={() => handleDeleteClick(record.id)} className="p-2 text-slate-700 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100">
                          <Trash2 className="w-4 h-4" />
                        </button>
                     </td>
