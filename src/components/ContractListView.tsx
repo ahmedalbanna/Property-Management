@@ -40,8 +40,6 @@ export default function ContractListView() {
     try {
       const contractData = {
         ...formData,
-        startDate: Timestamp.fromDate(new Date(formData.startDate)),
-        endDate: Timestamp.fromDate(new Date(formData.endDate)),
       };
       
       await addContract(contractData);

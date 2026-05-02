@@ -11,7 +11,7 @@
         "ownerId": { "type": "string" },
         "createdAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["name", "address", "type", "ownerId"]
+      "required": ["name", "address", "type", "ownerId", "createdAt"]
     },
     "Unit": {
       "title": "Unit",
@@ -33,6 +33,7 @@
       "type": "object",
       "properties": {
         "unitId": { "type": "string" },
+        "tenantId": { "type": "string" },
         "tenantName": { "type": "string" },
         "tenantPhone": { "type": "string" },
         "startDate": { "type": "string", "format": "date-time" },
@@ -44,7 +45,7 @@
         "status": { "type": "string", "enum": ["active", "expired", "terminated"] },
         "ownerId": { "type": "string" }
       },
-      "required": ["unitId", "tenantName", "startDate", "endDate", "baseRent", "baseCurrency", "ownerId"]
+      "required": ["unitId", "tenantId", "tenantName", "startDate", "endDate", "baseRent", "baseCurrency", "ownerId"]
     },
     "Tenant": {
       "title": "Tenant",
@@ -107,11 +108,11 @@
         "contractId": { "type": "string" },
         "amountPaidBase": { "type": "number" },
         "amountPaidLocal": { "type": "number" },
-        "exchangeRateAtPayment": { "type": "number" },
         "paymentDate": { "type": "string", "format": "date-time" },
-        "monthCovered": { "type": "string", "description": "YYYY-MM" }
+        "monthCovered": { "type": "string", "description": "YYYY-MM" },
+        "ownerId": { "type": "string" }
       },
-      "required": ["contractId", "amountPaidBase", "paymentDate"]
+      "required": ["contractId", "amountPaidBase", "amountPaidLocal", "paymentDate", "monthCovered", "ownerId"]
     }
   },
   "firestore": {

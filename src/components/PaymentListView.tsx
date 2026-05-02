@@ -37,7 +37,7 @@ export default function PaymentListView() {
     try {
       const paymentData = {
         ...formData,
-        paymentDate: Timestamp.fromDate(new Date(formData.paymentDate)),
+        paymentDate: formData.paymentDate,
       };
       
       await addPayment(paymentData);

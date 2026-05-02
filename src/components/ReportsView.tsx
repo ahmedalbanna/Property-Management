@@ -246,7 +246,7 @@ export default function ReportsView() {
                  </div>
               </div>
            </div>
-           <div className="h-[400px] w-full">
+           <div className="h-[400px] w-full min-h-0">
               <ResponsiveContainer width="100%" height="100%">
                  <BarChart data={monthlyData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />

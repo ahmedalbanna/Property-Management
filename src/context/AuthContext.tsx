@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { onAuthStateChanged, User, signInWithPopup, GoogleAuthProvider, signOut } from 'firebase/auth';
 import { auth } from '../lib/firebase';
+import { queryClient } from '../lib/queryClient';
 
 interface AuthContextType {
   user: User | null;
@@ -26,10 +27,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async () => {
     const provider = new GoogleAuthProvider();
     await signInWithPopup(auth, provider);
+    queryClient.clear();
   };
 
   const logout = async () => {
     await signOut(auth);
+    queryClient.clear();
   };
 
   return (

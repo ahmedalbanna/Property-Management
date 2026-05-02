@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { collection, query, where, getDocs, addDoc, deleteDoc, doc, updateDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, addDoc, deleteDoc, doc, updateDoc, Timestamp } from 'firebase/firestore';
 import { db, handleFirestoreError } from '../lib/firebase';
 import { useAuth } from '../context/AuthContext';
 import { Contract } from '../types';
@@ -27,11 +27,28 @@ export function useContracts() {
   const addContractMutation = useMutation({
     mutationFn: async (newContract: Omit<Contract, 'id' | 'ownerId'>) => {
       if (!user) throw new Error('User not authenticated');
-      const docRef = await addDoc(collection(db, 'contracts'), {
-        ...newContract,
-        ownerId: user.uid,
-      });
-      return { ...newContract, id: docRef.id, ownerId: user.uid } as Contract;
+      try {
+        const parseDate = (d: any) => {
+          if (d instanceof Date) return d;
+          if (typeof d === 'string') {
+            const [year, month, day] = d.split('-').map(Number);
+            return new Date(year, month - 1, day);
+          }
+          return new Date(d);
+        };
+
+        const docData = {
+          ...newContract,
+          startDate: Timestamp.fromDate(parseDate(newContract.startDate)),
+          endDate: Timestamp.fromDate(parseDate(newContract.endDate)),
+          ownerId: user.uid,
+        };
+        console.log('Contract creation payload:', docData);
+        const docRef = await addDoc(collection(db, 'contracts'), docData);
+        return { ...docData, id: docRef.id, startDate: docData.startDate.toDate(), endDate: docData.endDate.toDate() } as Contract;
+      } catch (err) {
+        handleFirestoreError(err, 'create', 'contracts');
+      }
     },
     onSuccess: (newContract) => {
       queryClient.setQueryData<Contract[]>(queryKeys.contracts.list(), (old) => {

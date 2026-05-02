@@ -29,7 +29,7 @@ export default function MaintenanceListView() {
     try {
       const recordData = {
         ...formData,
-        date: Timestamp.fromDate(new Date(formData.date)),
+        date: formData.date,
       };
       await addRecord(recordData);
       setIsAdding(false);

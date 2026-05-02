@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { collection, query, where, getDocs, addDoc, deleteDoc, doc, orderBy } from 'firebase/firestore';
+import { collection, query, where, getDocs, addDoc, deleteDoc, doc, orderBy, Timestamp } from 'firebase/firestore';
 import { db, handleFirestoreError } from '../lib/firebase';
 import { useAuth } from '../context/AuthContext';
 import { MaintenanceRecord } from '../types';
@@ -36,11 +36,24 @@ export function useMaintenance(propertyId?: string) {
   const addRecordMutation = useMutation({
     mutationFn: async (newRecord: Omit<MaintenanceRecord, 'id' | 'ownerId'>) => {
       if (!user) throw new Error('User not authenticated');
-      const docRef = await addDoc(collection(db, 'maintenance'), {
+      let date: Date;
+      if (newRecord.date instanceof Date) {
+        date = newRecord.date;
+      } else if (typeof newRecord.date === 'string') {
+        const [year, month, day] = newRecord.date.split('-').map(Number);
+        date = new Date(year, month - 1, day);
+      } else {
+        date = new Date(newRecord.date as any);
+      }
+      
+      const docData = {
         ...newRecord,
+        date: Timestamp.fromDate(date),
         ownerId: user.uid,
-      });
-      return { ...newRecord, id: docRef.id, ownerId: user.uid } as MaintenanceRecord;
+      };
+      
+      const docRef = await addDoc(collection(db, 'maintenance'), docData);
+      return { ...docData, id: docRef.id, date: docData.date.toDate() } as MaintenanceRecord;
     },
     onSuccess: (newRecord) => {
       queryClient.setQueryData<MaintenanceRecord[]>(queryKeys.maintenance.list(newRecord.propertyId), (old) => {

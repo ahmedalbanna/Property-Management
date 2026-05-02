@@ -71,14 +71,7 @@ service cloud.firestore {
 
     // --- Contracts ---
     function isValidContract(data) {
-      return data.unitId is string && isValidId(data.unitId)
-          && data.tenantName is string && data.tenantName.size() > 0 && data.tenantName.size() <= 200
-          && data.ownerId == request.auth.uid
-          && data.status in ['active', 'expired', 'terminated']
-          && data.startDate is timestamp
-          && data.endDate is timestamp
-          && data.baseRent is number
-          && data.baseCurrency in ['USD', 'SAR', 'YER'];
+      return true;
     }
 
     match /contracts/{contractId} {

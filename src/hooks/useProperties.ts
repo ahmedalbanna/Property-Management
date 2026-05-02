@@ -82,13 +82,15 @@ export function useProperties() {
     mutationFn: async (newProperty: Omit<Property, 'id' | 'ownerId' | 'createdAt'>) => {
       if (!user) throw new Error('User not authenticated');
       
-      const docRef = await addDoc(collection(db, 'properties'), {
+      const docData = {
         ...newProperty,
         ownerId: user.uid,
         createdAt: Timestamp.now(),
-      });
+      };
+
+      const docRef = await addDoc(collection(db, 'properties'), docData);
       
-      return { ...newProperty, id: docRef.id, ownerId: user.uid, createdAt: new Date() };
+      return { ...docData, id: docRef.id, createdAt: docData.createdAt.toDate() } as Property;
     },
     onSuccess: (newProp) => {
       // Optimistically update the list cache

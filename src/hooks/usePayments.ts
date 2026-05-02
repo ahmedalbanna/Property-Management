@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { collection, query, where, getDocs, addDoc, deleteDoc, doc, orderBy } from 'firebase/firestore';
+import { collection, query, where, getDocs, addDoc, deleteDoc, doc, orderBy, Timestamp } from 'firebase/firestore';
 import { db, handleFirestoreError } from '../lib/firebase';
 import { useAuth } from '../context/AuthContext';
 import { Payment } from '../types';
@@ -36,11 +36,29 @@ export function usePayments(contractId?: string) {
   const addPaymentMutation = useMutation({
     mutationFn: async (newPayment: Omit<Payment, 'id' | 'ownerId'>) => {
       if (!user) throw new Error('User not authenticated');
-      const docRef = await addDoc(collection(db, 'payments'), {
+      let paymentDate: Date;
+      if (newPayment.paymentDate instanceof Date) {
+        paymentDate = newPayment.paymentDate;
+      } else if (typeof newPayment.paymentDate === 'string') {
+        const [year, month, day] = newPayment.paymentDate.split('-').map(Number);
+        paymentDate = new Date(year, month - 1, day);
+      } else {
+        paymentDate = new Date(newPayment.paymentDate as any);
+      }
+      
+      const docData = {
         ...newPayment,
+        paymentDate: Timestamp.fromDate(paymentDate),
         ownerId: user.uid,
-      });
-      return { ...newPayment, id: docRef.id, ownerId: user.uid } as Payment;
+      };
+      
+      if (isNaN(docData.paymentDate.toDate().getTime())) {
+          console.error('Invalid payment date:', newPayment.paymentDate);
+          throw new Error('Invalid date value');
+      }
+      
+      const docRef = await addDoc(collection(db, 'payments'), docData);
+      return { ...docData, id: docRef.id, paymentDate: docData.paymentDate.toDate() } as Payment;
     },
     onSuccess: (newPayment) => {
       queryClient.setQueryData<Payment[]>(queryKeys.payments.list(newPayment.contractId), (old) => {

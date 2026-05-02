@@ -1,0 +1,225 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Phase 3: Primitive Definitions ---
+    
+    function isSignedIn() { return request.auth != null; }
+    
+    function isEmailVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+    
+    function isAdmin() {
+      return isEmailVerified() && request.auth.token.email == 'ahmedalbannatech@gmail.com';
+    }
+
+    function isOwner(resourceData) {
+      return isSignedIn() && resourceData.ownerId == request.auth.uid;
+    }
+
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // Relational Helpers
+    function ownsProperty(propertyId) {
+      return get(/databases/$(database)/documents/properties/$(propertyId)).data.ownerId == request.auth.uid;
+    }
+    function ownsContract(contractId) {
+      return get(/databases/$(database)/documents/contracts/$(contractId)).data.ownerId == request.auth.uid;
+    }
+
+    // --- Phase 4: Validation Blueprints ---
+
+    // 1. Properties
+    function isValidProperty(data) {
+      return data.keys().hasAll(['name', 'address', 'type', 'ownerId', 'createdAt'])
+          && data.keys().size() == 5
+          && data.name is string && data.name.size() > 0 && data.name.size() <= 200
+          && data.address is string && data.address.size() > 0 && data.address.size() <= 500
+          && data.type in ['commercial', 'residential', 'office']
+          && data.ownerId == request.auth.uid
+          && data.createdAt == request.time;
+    }
+
+    match /properties/{propertyId} {
+      allow get: if isSignedIn() && isOwner(existing());
+      allow list: if isSignedIn() && existing().ownerId == request.auth.uid;
+      
+      allow create: if isEmailVerified() && isValidId(propertyId) && isValidProperty(incoming());
+      
+      allow update: if isEmailVerified() && isOwner(existing()) && (
+        // Action: General Update
+        (incoming().diff(existing()).affectedKeys().hasOnly(['name', 'address', 'type'])) &&
+        incoming().name is string && incoming().name.size() <= 200 &&
+        incoming().address is string && incoming().address.size() <= 500 &&
+        incoming().type in ['commercial', 'residential', 'office']
+      );
+      
+      allow delete: if isEmailVerified() && isOwner(existing());
+    }
+
+    // 2. Units
+    function isValidUnit(data) {
+      return data.keys().hasAll(['propertyId', 'unitNumber', 'status', 'area', 'baseMonthlyRent', 'currency', 'ownerId'])
+          && data.keys().size() == 7
+          && data.propertyId is string && isValidId(data.propertyId)
+          && data.unitNumber is string && data.unitNumber.size() > 0 && data.unitNumber.size() <= 50
+          && data.status in ['vacant', 'occupied', 'maintenance']
+          && data.area is number
+          && data.baseMonthlyRent is number
+          && data.currency in ['USD', 'SAR', 'YER']
+          && data.ownerId == request.auth.uid;
+    }
+
+    match /units/{unitId} {
+      allow get: if isSignedIn() && isOwner(existing());
+      allow list: if isSignedIn() && existing().ownerId == request.auth.uid;
+      
+      allow create: if isEmailVerified() && isValidId(unitId) && isValidUnit(incoming()) && ownsProperty(incoming().propertyId);
+      
+      allow update: if isEmailVerified() && isOwner(existing()) && (
+        // Action: Update Status or Details (Cannot move property)
+        incoming().diff(existing()).affectedKeys().hasOnly(['status', 'unitNumber', 'area', 'baseMonthlyRent', 'currency']) &&
+        incoming().status in ['vacant', 'occupied', 'maintenance'] &&
+        incoming().unitNumber is string && incoming().unitNumber.size() <= 50 &&
+        incoming().area is number &&
+        incoming().baseMonthlyRent is number &&
+        incoming().currency in ['USD', 'SAR', 'YER']
+      );
+      
+      allow delete: if isEmailVerified() && isOwner(existing());
+    }
+
+    // 3. Tenants
+    function isValidTenant(data) {
+      return data.keys().hasAll(['name', 'email', 'phone', 'idNumber', 'ownerId', 'createdAt'])
+          && data.keys().size() == 6
+          && data.name is string && data.name.size() > 0 && data.name.size() <= 200
+          && data.email is string && data.email.size() <= 200
+          && data.phone is string && data.phone.size() > 0 && data.phone.size() <= 50
+          && data.idNumber is string && data.idNumber.size() <= 100
+          && data.ownerId == request.auth.uid
+          && data.createdAt == request.time;
+    }
+
+    match /tenants/{tenantId} {
+      allow get: if isSignedIn() && isOwner(existing());
+      allow list: if isSignedIn() && existing().ownerId == request.auth.uid;
+      
+      allow create: if isEmailVerified() && isValidId(tenantId) && isValidTenant(incoming());
+      
+      allow update: if isEmailVerified() && isOwner(existing()) && (
+        incoming().diff(existing()).affectedKeys().hasOnly(['name', 'email', 'phone', 'idNumber']) &&
+        incoming().name is string && incoming().name.size() <= 200 &&
+        incoming().email is string && incoming().email.size() <= 200 &&
+        incoming().phone is string && incoming().phone.size() <= 50 &&
+        incoming().idNumber is string && incoming().idNumber.size() <= 100
+      );
+      
+      allow delete: if isEmailVerified() && isOwner(existing());
+    }
+
+    // 4. Contracts
+    function isValidContract(data) {
+      return data.keys().hasAll([
+        'unitId', 'tenantId', 'tenantName', 'tenantPhone', 
+        'startDate', 'endDate', 'baseRent', 'baseCurrency', 
+        'conversionRate', 'escalationPercentage', 'status', 'ownerId'
+      ])
+          && data.keys().size() == 12
+          && data.unitId is string && isValidId(data.unitId)
+          && data.tenantId is string && isValidId(data.tenantId)
+          && data.tenantName is string && data.tenantName.size() > 0
+          && data.status in ['active', 'expired', 'terminated']
+          && data.startDate is timestamp
+          && data.endDate is timestamp
+          && data.baseRent is number
+          && data.ownerId == request.auth.uid;
+    }
+
+    match /contracts/{contractId} {
+      allow get: if isSignedIn() && isOwner(existing());
+      allow list: if isSignedIn() && existing().ownerId == request.auth.uid;
+      
+      allow create: if isEmailVerified() && isValidId(contractId) && isValidContract(incoming());
+      
+      allow update: if isEmailVerified() && isOwner(existing()) && (
+        // Action: Status Change (Must not be terminal state)
+        (existing().status == 'active' && incoming().diff(existing()).affectedKeys().hasOnly(['status']) && incoming().status in ['expired', 'terminated']) ||
+        // Action: Escalation Update
+        (existing().status == 'active' && incoming().diff(existing()).affectedKeys().hasOnly(['escalationPercentage']))
+      );
+      
+      allow delete: if isEmailVerified() && isOwner(existing());
+    }
+
+    // 5. Payments
+    function isValidPayment(data) {
+       return data.keys().hasAll(['contractId', 'amountPaidBase', 'amountPaidLocal', 'paymentDate', 'monthCovered', 'ownerId'])
+          && data.keys().size() == 6
+          && data.contractId is string && isValidId(data.contractId)
+          && data.amountPaidBase is number
+          && data.amountPaidLocal is number
+          && data.paymentDate is timestamp
+          && data.monthCovered is string && data.monthCovered.size() == 7
+          && data.ownerId == request.auth.uid;
+    }
+
+    match /payments/{paymentId} {
+      allow get: if isSignedIn() && isOwner(existing());
+      allow list: if isSignedIn() && existing().ownerId == request.auth.uid;
+      
+      allow create: if isEmailVerified() && isValidId(paymentId) && isValidPayment(incoming()) && ownsContract(incoming().contractId);
+      allow delete: if isEmailVerified() && isOwner(existing());
+    }
+
+    // 6. Maintenance
+    function isValidMaintenance(data) {
+      return data.keys().hasAll(['propertyId', 'description', 'cost', 'currency', 'date', 'ownerId'])
+          && data.keys().size() == 6
+          && data.propertyId is string && isValidId(data.propertyId)
+          && data.description is string && data.description.size() > 0
+          && data.cost is number
+          && data.currency in ['USD', 'SAR', 'YER']
+          && data.date is timestamp
+          && data.ownerId == request.auth.uid;
+    }
+
+    match /maintenance/{recordId} {
+      allow get: if isSignedIn() && isOwner(existing());
+      allow list: if isSignedIn() && existing().ownerId == request.auth.uid;
+      
+      allow create: if isEmailVerified() && isValidId(recordId) && isValidMaintenance(incoming()) && ownsProperty(incoming().propertyId);
+      allow update: if isEmailVerified() && isOwner(existing()) && (
+        incoming().diff(existing()).affectedKeys().hasOnly(['description', 'cost', 'currency', 'date']) &&
+        incoming().description is string && incoming().description.size() <= 1000 &&
+        incoming().cost is number &&
+        incoming().currency in ['USD', 'SAR', 'YER'] &&
+        incoming().date is timestamp
+      );
+      allow delete: if isEmailVerified() && isOwner(existing());
+    }
+
+    // 7. Exchange Rates (Global Cache)
+    match /exchange_rates/{rateId} {
+      allow read: if isSignedIn();
+      allow write: if isEmailVerified() && (
+        // Only allow updating the 'USD' doc with valid structure
+        rateId == 'USD' && 
+        incoming().keys().hasAll(['id', 'base', 'rates', 'lastUpdated']) &&
+        incoming().base == 'USD' &&
+        incoming().rates is map &&
+        incoming().lastUpdated is timestamp
+      );
+    }
+  }
+}
