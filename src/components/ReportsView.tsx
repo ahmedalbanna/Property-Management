@@ -137,8 +137,8 @@ export default function ReportsView() {
     <div className="space-y-10 pb-12">
       <header className="flex flex-col md:flex-row justify-between items-start md:items-center bg-slate-900/50 p-6 border border-border rounded-xl backdrop-blur-md gap-4">
         <div>
-          <h2 className="text-3xl font-display font-bold text-white tracking-tight">التقارير المالية</h2>
-          <p className="text-slate-400 text-sm mt-1">تحليل شامل للإيرادات، المصاريف، ونسب الإشغال</p>
+          <h2 className="text-3xl font-display font-bold text-white tracking-tight">{t('reports.title')}</h2>
+          <p className="text-slate-400 text-sm mt-1">{t('reports.subtitle')}</p>
         </div>
         
         <div className="flex flex-wrap items-center gap-3">
@@ -184,7 +184,7 @@ export default function ReportsView() {
               <div className="p-2 bg-emerald-500/10 text-emerald-500 rounded-lg">
                 <Wallet className="w-5 h-5" />
               </div>
-              <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">إجمالي الدخل (YER)</span>
+              <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">{t('reports.income')} (YER)</span>
             </div>
             <div className="text-2xl font-display font-bold text-white">
               {filteredData.payments.reduce((acc, p) => acc + p.amountPaidLocal, 0).toLocaleString()}
@@ -196,7 +196,7 @@ export default function ReportsView() {
               <div className="p-2 bg-red-500/10 text-red-500 rounded-lg">
                 <TrendingUp className="w-5 h-5" />
               </div>
-              <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">إجمالي المصاريف (YER)</span>
+              <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">{t('reports.expenses')} (YER)</span>
             </div>
             <div className="text-2xl font-display font-bold text-white">
               {filteredData.maintenance.reduce((acc, m) => acc + m.cost, 0).toLocaleString()}
@@ -208,7 +208,7 @@ export default function ReportsView() {
               <div className="p-2 bg-indigo-500/10 text-indigo-500 rounded-lg">
                 <AlertCircle className="w-5 h-5" />
               </div>
-              <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">نسبة الشواغر</span>
+              <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">{t('reports.vacancy')}</span>
             </div>
             <div className="flex items-end gap-2">
               <div className="text-2xl font-display font-bold text-white">{vacancyStats.rate}%</div>
@@ -221,7 +221,7 @@ export default function ReportsView() {
               <div className="p-2 bg-primary/10 text-primary rounded-lg">
                 <Building2 className="w-5 h-5" />
               </div>
-              <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">صافي الربح التقديري</span>
+              <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">{t('reports.profit')}</span>
             </div>
             <div className="text-2xl font-display font-bold text-emerald-500">
               {(filteredData.payments.reduce((acc, p) => acc + p.amountPaidLocal, 0) - filteredData.maintenance.reduce((acc, m) => acc + m.cost, 0)).toLocaleString()}
@@ -234,15 +234,15 @@ export default function ReportsView() {
         {/* Main Chart */}
         <div className="lg:col-span-8 geometric-card p-8">
            <div className="flex justify-between items-center mb-10">
-              <h3 className="text-sm font-black uppercase tracking-[0.2em] text-slate-300">أداء التدفق النقدي الشهري (YER)</h3>
+              <h3 className="text-sm font-black uppercase tracking-[0.2em] text-slate-300">{t('reports.cashflow_chart')} (YER)</h3>
               <div className="flex gap-4">
                  <div className="flex items-center gap-2">
                     <div className="w-3 h-3 bg-emerald-500 rounded-full"></div>
-                    <span className="text-[10px] text-slate-500 font-bold">الدخل</span>
+                    <span className="text-[10px] text-slate-500 font-bold">{t('reports.income_label')}</span>
                  </div>
                  <div className="flex items-center gap-2">
                     <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                    <span className="text-[10px] text-slate-500 font-bold">المصاريف</span>
+                    <span className="text-[10px] text-slate-500 font-bold">{t('reports.expense_label')}</span>
                  </div>
               </div>
            </div>

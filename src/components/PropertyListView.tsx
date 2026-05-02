@@ -33,7 +33,7 @@ export default function PropertyListView() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('هل أنت متأكد من حذف هذا العقار؟')) return;
+    if (!confirm(t('property.delete_confirm'))) return;
     try {
       await deleteProperty(id);
     } catch (err) {
@@ -55,7 +55,7 @@ export default function PropertyListView() {
       <header className="flex justify-between items-center bg-slate-900/50 p-6 border border-border rounded-xl backdrop-blur-md">
         <div>
           <h2 className="text-3xl font-display font-bold text-white tracking-tight">{t('nav.properties')}</h2>
-          <p className="text-slate-400 text-sm mt-1">إدارة الأصول والعقارات الرئيسية</p>
+          <p className="text-slate-400 text-sm mt-1">{t('property.subtitle')}</p>
         </div>
         <button 
           onClick={() => setIsAdding(!isAdding)}
@@ -82,7 +82,7 @@ export default function PropertyListView() {
                   value={formData.name}
                   onChange={e => setFormData({ ...formData, name: e.target.value })}
                   className="w-full px-4 py-3 bg-black border border-border rounded-lg text-white focus:ring-2 focus:ring-primary outline-none transition-all" 
-                  placeholder="مثلاً: قصر النبلاء"
+                  placeholder={t('property.placeholder_name')}
                 />
               </div>
               <div className="space-y-2">
@@ -92,7 +92,7 @@ export default function PropertyListView() {
                   value={formData.address}
                   onChange={e => setFormData({ ...formData, address: e.target.value })}
                   className="w-full px-4 py-3 bg-black border border-border rounded-lg text-white focus:ring-2 focus:ring-primary outline-none transition-all" 
-                  placeholder="المدينة، الحي..."
+                  placeholder={t('property.placeholder_address')}
                 />
               </div>
               <div className="space-y-2">
@@ -102,9 +102,9 @@ export default function PropertyListView() {
                   onChange={e => setFormData({ ...formData, type: e.target.value as PropertyType })}
                   className="w-full px-4 py-3 bg-black border border-border rounded-lg text-white focus:ring-2 focus:ring-primary outline-none transition-all appearance-none"
                 >
-                  <option value="residential">سكني</option>
-                  <option value="commercial">تجاري</option>
-                  <option value="office">مكاتب</option>
+                  <option value="residential">{t('property.type_residential')}</option>
+                  <option value="commercial">{t('property.type_commercial')}</option>
+                  <option value="office">{t('property.type_office')}</option>
                 </select>
               </div>
               <div className="md:col-span-3 flex justify-end gap-3 pt-6 border-t border-border mt-2">
@@ -135,7 +135,7 @@ export default function PropertyListView() {
         ) : properties.length === 0 ? (
           <div className="col-span-full py-20 text-center border border-dashed border-border rounded-2xl bg-slate-900/20">
              <Building2 className="w-12 h-12 text-slate-800 mx-auto mb-4" />
-             <p className="text-slate-500 font-bold uppercase tracking-widest text-sm">لا توجد عقارات مضافة بعد</p>
+             <p className="text-slate-500 font-bold uppercase tracking-widest text-sm">{t('property.list_empty')}</p>
           </div>
         ) : (
           properties.map(property => {
@@ -168,7 +168,7 @@ export default function PropertyListView() {
                   </div>
                   <div className="flex justify-between items-center pt-4 border-t border-border">
                      <span className="px-3 py-1 bg-slate-950 border border-border text-slate-500 rounded-md text-[10px] font-black uppercase tracking-widest">
-                       {property.type === 'residential' ? 'سكني' : property.type === 'commercial' ? 'تجاري' : 'مكاتب'}
+                       {property.type === 'residential' ? t('property.type_residential') : property.type === 'commercial' ? t('property.type_commercial') : t('property.type_office')}
                      </span>
                      <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-lg shadow-emerald-500/50"></div>
                   </div>

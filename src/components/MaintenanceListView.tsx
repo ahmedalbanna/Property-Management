@@ -40,7 +40,7 @@ export default function MaintenanceListView() {
   };
 
   const handleDeleteClick = async (id: string) => {
-    if (!confirm('هل أنت متأكد من حذف هذا السجل المصروفي؟')) return;
+    if (!confirm(t('maintenance.delete_confirm'))) return;
     try {
       await deleteRecord(id);
     } catch (err) {
@@ -52,8 +52,8 @@ export default function MaintenanceListView() {
     <div className="space-y-10 pb-12">
       <header className="flex justify-between items-center bg-slate-900/50 p-6 border border-border rounded-xl backdrop-blur-md">
         <div>
-          <h2 className="text-3xl font-display font-bold text-white tracking-tight">إدارة المصاريف</h2>
-          <p className="text-slate-400 text-sm mt-1">تتبع تكاليف الصيانة والتشغيل للعقارات</p>
+          <h2 className="text-3xl font-display font-bold text-white tracking-tight">{t('maintenance.title')}</h2>
+          <p className="text-slate-400 text-sm mt-1">{t('maintenance.subtitle')}</p>
         </div>
         <button 
           disabled={properties.length === 0}
@@ -61,7 +61,7 @@ export default function MaintenanceListView() {
           className="flex items-center gap-2 bg-primary text-white px-6 py-2.5 rounded-lg hover:bg-primary/90 transition-all font-bold active:scale-95 disabled:opacity-30"
         >
           <Plus className="w-5 h-5" />
-          <span>إضافة مصروف</span>
+          <span>{t('maintenance.add')}</span>
         </button>
       </header>
 
@@ -70,20 +70,20 @@ export default function MaintenanceListView() {
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
             <form onSubmit={handleSubmit} className="geometric-card p-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">العقار</label>
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">{t('maintenance.form_property')}</label>
                 <select 
                   required
                   value={formData.propertyId}
                   onChange={e => setFormData({ ...formData, propertyId: e.target.value })}
                   className="w-full px-4 py-3 bg-black border border-border rounded-lg text-white appearance-none outline-none focus:ring-2 focus:ring-primary"
                 >
-                  <option value="">اختر العقار</option>
+                  <option value="">{t('maintenance.select_property')}</option>
                   {properties.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                 </select>
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">الوصف / البيان</label>
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">{t('maintenance.form_description')}</label>
                 <input 
                   required
                   value={formData.description}
@@ -93,7 +93,7 @@ export default function MaintenanceListView() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">التاريخ</label>
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">{t('maintenance.form_date')}</label>
                 <input 
                   type="date"
                   required
@@ -104,7 +104,7 @@ export default function MaintenanceListView() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">المبلغ</label>
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">{t('maintenance.form_amount')}</label>
                 <input 
                   type="number"
                   required
@@ -115,7 +115,7 @@ export default function MaintenanceListView() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">العملة</label>
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">{t('maintenance.form_currency')}</label>
                 <select 
                   required
                   value={formData.currency}
@@ -129,8 +129,8 @@ export default function MaintenanceListView() {
               </div>
 
               <div className="md:col-span-2 lg:col-span-3 flex justify-end gap-3 pt-6 border-t border-border">
-                <button type="button" onClick={() => setIsAdding(false)} className="px-6 py-2 text-slate-500 hover:text-white transition-colors text-xs font-bold uppercase tracking-widest">إلغاء</button>
-                <button type="submit" className="px-12 py-3 bg-primary text-white rounded-lg font-bold shadow-xl shadow-primary/20 hover:bg-primary/90 transition-all">حفظ المصروف</button>
+                <button type="button" onClick={() => setIsAdding(false)} className="px-6 py-2 text-slate-500 hover:text-white transition-colors text-xs font-bold uppercase tracking-widest">{t('tenant.cancel')}</button>
+                <button type="submit" className="px-12 py-3 bg-primary text-white rounded-lg font-bold shadow-xl shadow-primary/20 hover:bg-primary/90 transition-all">{t('maintenance.save_button')}</button>
               </div>
             </form>
           </motion.div>
@@ -141,18 +141,18 @@ export default function MaintenanceListView() {
         <table className="w-full text-right">
           <thead className="bg-slate-950/50 border-b border-border">
             <tr>
-              <th className="px-8 py-5 text-[10px] font-black text-slate-500 uppercase tracking-widest">العقار</th>
-              <th className="px-8 py-5 text-[10px] font-black text-slate-500 uppercase tracking-widest">التاريخ</th>
-              <th className="px-8 py-5 text-[10px] font-black text-slate-500 uppercase tracking-widest">البيان</th>
-              <th className="px-8 py-5 text-[10px] font-black text-slate-500 uppercase tracking-widest">القيمة</th>
-              <th className="px-8 py-5 text-[10px] font-black text-slate-500 uppercase tracking-widest">إجراءات</th>
+              <th className="px-8 py-5 text-[10px] font-black text-slate-500 uppercase tracking-widest">{t('maintenance.header_property')}</th>
+              <th className="px-8 py-5 text-[10px] font-black text-slate-500 uppercase tracking-widest">{t('maintenance.header_date')}</th>
+              <th className="px-8 py-5 text-[10px] font-black text-slate-500 uppercase tracking-widest">{t('maintenance.header_description')}</th>
+              <th className="px-8 py-5 text-[10px] font-black text-slate-500 uppercase tracking-widest">{t('maintenance.header_cost')}</th>
+              <th className="px-8 py-5 text-[10px] font-black text-slate-500 uppercase tracking-widest">{t('maintenance.header_actions')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border bg-slate-900/20">
             {loading ? (
-               <tr><td colSpan={5} className="p-10 text-center animate-pulse text-[10px] uppercase tracking-widest text-slate-600">جاري التحديث...</td></tr>
+               <tr><td colSpan={5} className="p-10 text-center animate-pulse text-[10px] uppercase tracking-widest text-slate-600">{t('maintenance.loading')}</td></tr>
             ) : records.length === 0 ? (
-               <tr><td colSpan={5} className="p-20 text-center text-slate-700 italic">لا توجد مصاريف مسجلة لهذا النطاق</td></tr>
+               <tr><td colSpan={5} className="p-20 text-center text-slate-700 italic">{t('maintenance.empty')}</td></tr>
             ) : (
               records.map(record => {
                 const property = properties.find(p => p.id === record.propertyId);

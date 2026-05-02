@@ -53,7 +53,7 @@ function Sidebar({ currentView, setView }: { currentView: ViewType; setView: (v:
     { id: 'contracts', label: t('nav.contracts'), icon: FileText },
     { id: 'payments', label: t('nav.payments'), icon: CreditCard },
     { id: 'tenants', label: t('nav.tenants'), icon: User },
-    { id: 'maintenance', label: 'المصاريف', icon: Wallet },
+    { id: 'maintenance', label: t('nav.maintenance'), icon: Wallet },
     { id: 'reports', label: t('nav.reports'), icon: TrendingUp },
   ];
 
@@ -154,14 +154,14 @@ function LoginScreen() {
         </div>
         <div className="space-y-3">
           <h1 className="text-3xl font-display font-bold text-white leading-tight">{t('app.title')}</h1>
-          <p className="text-slate-400 font-medium">إدارة العقارات والعملات بتوازن هندسي</p>
+          <p className="text-slate-400 font-medium">{t('app.subtitle')}</p>
         </div>
         <button
           onClick={login}
           className="w-full py-4 px-6 bg-primary text-white rounded-lg font-bold hover:bg-primary/90 transition-all hover:shadow-lg hover:shadow-primary/30 flex items-center justify-center gap-3 active:scale-95"
         >
           <img src="https://www.google.com/favicon.ico" className="w-5 h-5 brightness-200" alt="Google" />
-          تسجيل الدخول عبر جوجل
+          {t('auth.login')}
         </button>
         <p className="text-[10px] text-slate-600 uppercase tracking-widest pt-4">© 2026 Ink & Quill Property</p>
       </motion.div>

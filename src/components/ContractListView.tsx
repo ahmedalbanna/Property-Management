@@ -74,7 +74,7 @@ export default function ContractListView() {
       <header className="flex justify-between items-center bg-slate-900/50 p-6 border border-border rounded-xl backdrop-blur-md">
         <div>
           <h2 className="text-3xl font-display font-bold text-white tracking-tight">{t('nav.contracts')}</h2>
-          <p className="text-slate-400 text-sm mt-1">إدارة الاتفاقيات المالية وتحديثات العملات</p>
+          <p className="text-slate-400 text-sm mt-1">{t('contract.subtitle')}</p>
         </div>
         <button 
           disabled={units.filter(u => u.status === 'vacant').length === 0}
@@ -99,7 +99,7 @@ export default function ContractListView() {
               
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">الوحدة المتاحة</label>
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">{t('contract.unit_available')}</label>
                     <select 
                       required
                       value={formData.unitId}
@@ -114,14 +114,14 @@ export default function ContractListView() {
                       }}
                       className="w-full px-4 py-3 bg-black border border-border rounded-lg text-white appearance-none outline-none focus:ring-2 focus:ring-primary"
                     >
-                      <option value="">اختر الوحدة الشاغرة</option>
+                      <option value="">{t('contract.select_vacant_unit')}</option>
                       {units.filter(u => u.status === 'vacant').map(u => (
                         <option key={u.id} value={u.id}>{properties.find(p => p.id === u.propertyId)?.name} - {u.unitNumber}</option>
                       ))}
                     </select>
                  </div>
                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">ربط بمستأجر مسجل</label>
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">{t('contract.link_tenant')}</label>
                     <select 
                       value={formData.tenantId}
                       onChange={e => {
@@ -135,7 +135,7 @@ export default function ContractListView() {
                       }}
                       className="w-full px-4 py-3 bg-black border border-border rounded-lg text-white appearance-none outline-none focus:ring-2 focus:ring-primary"
                     >
-                      <option value="">(اختياري) اختر مستأجر</option>
+                      <option value="">{t('contract.select_tenant_optional')}</option>
                       {tenants.map(t => (
                         <option key={t.id} value={t.id}>{t.name}</option>
                       ))}
@@ -151,7 +151,7 @@ export default function ContractListView() {
                     />
                  </div>
                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">هاتف المستأجر</label>
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">{t('contract.tenant_phone')}</label>
                     <input 
                       required
                       value={formData.tenantPhone}

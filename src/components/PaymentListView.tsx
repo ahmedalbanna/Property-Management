@@ -56,7 +56,7 @@ export default function PaymentListView() {
   };
 
   const handleDeleteClick = async (id: string) => {
-    if (!confirm('هل أنت متأكد من حذف هذا السجل المالي؟')) return;
+    if (!confirm(t('payment.delete_confirm'))) return;
     try {
       await deletePayment(id);
     } catch (err) {
@@ -74,7 +74,7 @@ export default function PaymentListView() {
       <header className="flex justify-between items-center bg-slate-900/50 p-6 border border-border rounded-xl backdrop-blur-md">
         <div>
           <h2 className="text-3xl font-display font-bold text-white tracking-tight">{t('nav.payments')}</h2>
-          <p className="text-slate-400 text-sm mt-1">تتبع التدفقات النقدية والتحويلات للعملة المحلية</p>
+          <p className="text-slate-400 text-sm mt-1">{t('payment.subtitle')}</p>
         </div>
         <button 
           disabled={contracts.length === 0}
@@ -82,7 +82,7 @@ export default function PaymentListView() {
           className="flex items-center gap-2 bg-primary text-white px-6 py-2.5 rounded-lg hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 font-bold active:scale-95 disabled:opacity-30"
         >
           <Plus className="w-5 h-5" />
-          <span>تسجيل دفعة</span>
+          <span>{t('payment.add_btn')}</span>
         </button>
       </header>
 
@@ -96,7 +96,7 @@ export default function PaymentListView() {
           >
             <form onSubmit={handleSubmit} className="geometric-card p-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">العقد المستهدف</label>
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">{t('payment.form_tenant')}</label>
                 <select 
                   required
                   value={formData.contractId}
@@ -119,13 +119,13 @@ export default function PaymentListView() {
                   }}
                   className="w-full px-4 py-3 bg-black border border-border rounded-lg text-white outline-none focus:ring-2 focus:ring-primary appearance-none"
                 >
-                  <option value="">اختر المستأجر المقيد</option>
+                  <option value="">{t('payment.form_tenant')}</option>
                   {contracts.map(c => <option key={c.id} value={c.id}>{c.tenantName} - {c.baseRent} {c.baseCurrency}</option>)}
                 </select>
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">المبلغ (Base Currency)</label>
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">{t('payment.form_amount')}</label>
                 <input 
                   type="number"
                   required
@@ -139,7 +139,7 @@ export default function PaymentListView() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">سعر الصرف وقت الدفع</label>
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">{t('contract.rate_yer')}</label>
                 <input 
                   type="number"
                   required
@@ -153,14 +153,14 @@ export default function PaymentListView() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">المعادل بالريال اليمني (YER)</label>
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">{t('payment.header_local')}</label>
                 <div className="px-4 py-3 bg-slate-950 border border-border rounded-lg text-emerald-500 font-mono font-bold">
                   {formData.amountPaidLocal.toLocaleString()} YER
                 </div>
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">تاريخ السداد</label>
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">{t('payment.form_date')}</label>
                 <input 
                   type="date"
                   required
@@ -171,7 +171,7 @@ export default function PaymentListView() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">عن شهر</label>
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">{t('payment.month')}</label>
                 <input 
                   type="month"
                   required
@@ -194,7 +194,7 @@ export default function PaymentListView() {
         <div className="p-4 bg-slate-950 border-b border-border flex items-center gap-4">
            <Search className="w-4 h-4 text-slate-600" />
            <input 
-             placeholder="بحث باسم المستأجر..."
+             placeholder={t('payment.search_placeholder')}
              value={searchTerm}
              onChange={e => setSearchTerm(e.target.value)}
              className="bg-transparent border-none outline-none text-sm text-white flex-1"
@@ -203,12 +203,12 @@ export default function PaymentListView() {
         <table className="w-full text-right">
           <thead className="bg-slate-950/50 border-b border-border">
             <tr>
-              <th className="px-8 py-5 text-[10px] font-black text-slate-500 uppercase tracking-widest">المستأجر</th>
-              <th className="px-8 py-5 text-[10px] font-black text-slate-500 uppercase tracking-widest">التاريخ</th>
-              <th className="px-8 py-5 text-[10px] font-black text-slate-500 uppercase tracking-widest">عن فترة</th>
-              <th className="px-8 py-5 text-[10px] font-black text-slate-500 uppercase tracking-widest">القيمة الأساسية</th>
-              <th className="px-8 py-5 text-[10px] font-black text-slate-500 uppercase tracking-widest">القيمة المحلية (YER)</th>
-              <th className="px-8 py-5 text-[10px] font-black text-slate-500 uppercase tracking-widest">إجراءات</th>
+              <th className="px-8 py-5 text-[10px] font-black text-slate-500 uppercase tracking-widest">{t('payment.header_tenant')}</th>
+              <th className="px-8 py-5 text-[10px] font-black text-slate-500 uppercase tracking-widest">{t('payment.header_date')}</th>
+              <th className="px-8 py-5 text-[10px] font-black text-slate-500 uppercase tracking-widest">{t('payment.header_period')}</th>
+              <th className="px-8 py-5 text-[10px] font-black text-slate-500 uppercase tracking-widest">{t('payment.header_base')}</th>
+              <th className="px-8 py-5 text-[10px] font-black text-slate-500 uppercase tracking-widest">{t('payment.header_local')}</th>
+              <th className="px-8 py-5 text-[10px] font-black text-slate-500 uppercase tracking-widest">{t('payment.header_actions')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border bg-slate-900/20">

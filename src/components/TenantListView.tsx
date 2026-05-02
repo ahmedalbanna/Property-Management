@@ -115,7 +115,7 @@ export default function TenantListView() {
       {/* Left Column: Tenant List */}
       <div className={cn("lg:col-span-4 flex flex-col gap-6", selectedTenant && "hidden lg:flex")}>
         <header className="flex justify-between items-center bg-slate-900/50 p-6 border border-border rounded-xl backdrop-blur-md">
-          <h2 className="text-2xl font-display font-bold text-white tracking-tight">المستأجرين</h2>
+          <h2 className="text-2xl font-display font-bold text-white tracking-tight">{t('tenant.list_title')}</h2>
           <button 
             onClick={() => setIsAdding(!isAdding)}
             className="p-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-all font-bold"
@@ -128,13 +128,13 @@ export default function TenantListView() {
           {isAdding && (
             <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
                <form onSubmit={handleSubmit} className="geometric-card p-6 space-y-4">
-                  <input required placeholder="الاسم الكامل" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} className="w-full px-4 py-2 bg-black border border-border rounded text-white text-sm" />
-                  <input required placeholder="رقم الهاتف" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} className="w-full px-4 py-2 bg-black border border-border rounded text-white text-sm" />
-                  <input placeholder="البريد الإلكتروني" type="email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} className="w-full px-4 py-2 bg-black border border-border rounded text-white text-sm" />
-                  <input placeholder="رقم الهوية / الجواز" value={formData.idNumber} onChange={e => setFormData({ ...formData, idNumber: e.target.value })} className="w-full px-4 py-2 bg-black border border-border rounded text-white text-sm" />
+                  <input required placeholder={t('tenant.add_name')} value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} className="w-full px-4 py-2 bg-black border border-border rounded text-white text-sm" />
+                  <input required placeholder={t('tenant.add_phone')} value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} className="w-full px-4 py-2 bg-black border border-border rounded text-white text-sm" />
+                  <input placeholder={t('tenant.add_email')} type="email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} className="w-full px-4 py-2 bg-black border border-border rounded text-white text-sm" />
+                  <input placeholder={t('tenant.add_id')} value={formData.idNumber} onChange={e => setFormData({ ...formData, idNumber: e.target.value })} className="w-full px-4 py-2 bg-black border border-border rounded text-white text-sm" />
                   <div className="flex gap-2 justify-end">
-                    <button type="button" onClick={() => setIsAdding(false)} className="text-xs text-slate-500 font-bold uppercase tracking-widest px-4 py-2">إلغاء</button>
-                    <button type="submit" className="bg-primary text-white px-6 py-2 rounded text-xs font-bold uppercase tracking-widest shadow-lg shadow-primary/20">حفظ</button>
+                    <button type="button" onClick={() => setIsAdding(false)} className="text-xs text-slate-500 font-bold uppercase tracking-widest px-4 py-2">{t('tenant.cancel')}</button>
+                    <button type="submit" className="bg-primary text-white px-6 py-2 rounded text-xs font-bold uppercase tracking-widest shadow-lg shadow-primary/20">{t('tenant.save')}</button>
                   </div>
                </form>
             </motion.div>
@@ -143,11 +143,11 @@ export default function TenantListView() {
 
         <div className="flex-1 overflow-y-auto space-y-4 pr-1">
           {loading ? (
-             <div className="text-center py-10 text-slate-500 animate-pulse font-mono text-xs uppercase">تحميل سجلات النشاط...</div>
+             <div className="text-center py-10 text-slate-500 animate-pulse font-mono text-xs uppercase">{t('tenant.loading_records')}</div>
           ) : tenants.length === 0 ? (
             <div className="text-center py-20 geometric-card bg-slate-900/10 border-dashed">
                <User className="w-8 h-8 text-slate-800 mx-auto mb-2" />
-               <p className="text-xs text-slate-600 font-bold uppercase tracking-widest">لا يوجد مستأجرين حالياً</p>
+               <p className="text-xs text-slate-600 font-bold uppercase tracking-widest">{t('tenant.no_tenants')}</p>
             </div>
           ) : (
             tenants.map(tenant => (
@@ -203,7 +203,7 @@ export default function TenantListView() {
                 </div>
               </div>
               <div className="flex gap-2">
-                 <button onClick={() => setSelectedTenant(null)} className="lg:hidden p-2 text-slate-400 hover:text-white">إغلاق</button>
+                 <button onClick={() => setSelectedTenant(null)} className="lg:hidden p-2 text-slate-400 hover:text-white">{t('tenant.close')}</button>
                  <button onClick={() => deleteTenant(selectedTenant.id)} className="p-2 text-slate-600 hover:text-red-500 transition-colors"><Trash2 className="w-5 h-5"/></button>
               </div>
             </header>
@@ -214,11 +214,11 @@ export default function TenantListView() {
                   <div className="geometric-card p-6 space-y-6">
                      <h3 className="text-xs font-black uppercase tracking-widest text-slate-500 flex items-center gap-2">
                         <FileText className="w-4 h-4 text-primary" />
-                        سجل العقود
+                        {t('tenant.contracts_history')}
                      </h3>
                      <div className="space-y-4">
                         {contracts.length === 0 ? (
-                          <p className="text-xs text-slate-600 italic">لا توجد عقود مسجلة لهذا المستأجر</p>
+                          <p className="text-xs text-slate-600 italic">{t('tenant.no_contracts_found')}</p>
                         ) : (
                           contracts.map(c => (
                             <div key={c.id} className="p-4 bg-slate-950 border border-border rounded-lg relative overflow-hidden group">
@@ -241,11 +241,11 @@ export default function TenantListView() {
                   <div className="geometric-card p-6 space-y-6">
                      <h3 className="text-xs font-black uppercase tracking-widest text-slate-500 flex items-center gap-2">
                         <CreditCard className="w-4 h-4 text-emerald-500" />
-                        تاريخ المدفوعات
+                        {t('tenant.payments_history')}
                      </h3>
                      <div className="space-y-3">
                         {payments.length === 0 ? (
-                           <p className="text-xs text-slate-600 italic">لا توجد عمليات صرف مسجلة</p>
+                           <p className="text-xs text-slate-600 italic">{t('tenant.no_payments_found')}</p>
                         ) : (
                           payments.slice(0, 5).map(p => (
                              <div key={p.id} className="flex justify-between items-center p-3 border-b border-border last:border-0">
@@ -268,14 +268,14 @@ export default function TenantListView() {
                   <header className="p-4 border-b border-border bg-slate-950/50 flex justify-between items-center">
                      <h3 className="text-xs font-black uppercase tracking-widest text-slate-500 flex items-center gap-2">
                         <MessageSquare className="w-4 h-4 text-primary" />
-                        مراسلات وتنبيهات
+                        {t('tenant.messages_and_alerts')}
                      </h3>
                   </header>
                   <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
                      {messages.length === 0 ? (
                         <div className="h-full flex flex-col items-center justify-center opacity-20 scale-90">
                            <Send className="w-12 h-12 text-slate-500 mb-2" />
-                           <p className="text-[10px] font-black uppercase tracking-[0.2em]">لا توجد رسائل</p>
+                           <p className="text-[10px] font-black uppercase tracking-[0.2em]">{t('tenant.no_messages')}</p>
                         </div>
                      ) : (
                         messages.map(msg => (
@@ -290,7 +290,7 @@ export default function TenantListView() {
                   </div>
                   <form onSubmit={handleSendMessage} className="p-4 border-t border-border bg-slate-950/50 flex gap-2">
                      <input 
-                       placeholder="اكتب رسالة أو تنبيه..."
+                       placeholder={t('tenant.write_message_placeholder')}
                        value={newMessage}
                        onChange={e => setNewMessage(e.target.value)}
                        className="flex-1 bg-black border border-border rounded-lg px-4 py-2 text-xs text-white outline-none focus:ring-1 focus:ring-primary" 
@@ -307,7 +307,7 @@ export default function TenantListView() {
              <div className="w-24 h-24 rounded-full border-2 border-dashed border-slate-800 flex items-center justify-center mb-6">
                 <User className="w-10 h-10 text-slate-800" />
              </div>
-             <p className="font-display font-medium text-slate-600 uppercase tracking-widest text-sm">اختر مستأجر للمتابعة الهندسية</p>
+             <p className="font-display font-medium text-slate-600 uppercase tracking-widest text-sm">{t('tenant.select_placeholder')}</p>
           </div>
         )}
       </div>

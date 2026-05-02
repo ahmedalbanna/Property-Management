@@ -50,21 +50,21 @@ export default function DashboardView() {
 
   if (loading || !stats) return (
     <div className="flex items-center justify-center h-64">
-      <div className="text-slate-500 font-mono animate-pulse uppercase tracking-widest text-xs">جمع البيانات الهندسية...</div>
+      <div className="text-slate-500 font-mono animate-pulse uppercase tracking-widest text-xs">{t('dashboard.loading')}</div>
     </div>
   );
 
   const cards = [
     { label: t('dashboard.occupancy'), value: `${stats.totalUnits ? Math.round((stats.occupiedUnits / stats.totalUnits) * 100) : 0}%`, icon: Box, color: 'text-indigo-400', bg: 'bg-indigo-500/10' },
     { label: t('dashboard.active_contracts'), value: stats.activeContracts, icon: FileText, color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
-    { label: 'إجمالي الإيرادات (YER)', value: stats.totalRevenueYER.toLocaleString(), icon: CreditCard, color: 'text-emerald-500', bg: 'bg-emerald-500/20' },
+    { label: t('dashboard.revenue_total'), value: stats.totalRevenueYER.toLocaleString(), icon: CreditCard, color: 'text-emerald-500', bg: 'bg-emerald-500/20' },
     { label: t('dashboard.pending_expiry'), value: stats.expiringSoon, icon: AlertCircle, color: 'text-amber-400', bg: 'bg-amber-500/10' },
-    { label: 'إجمالي الوحدات', value: stats.totalUnits, icon: Building2, color: 'text-violet-400', bg: 'bg-violet-500/10' },
+    { label: t('dashboard.total_units'), value: stats.totalUnits, icon: Building2, color: 'text-violet-400', bg: 'bg-violet-500/10' },
   ];
 
   if (loading) return (
     <div className="flex items-center justify-center h-64">
-      <div className="text-slate-500 font-mono animate-pulse uppercase tracking-widest text-xs">جمع البيانات الهندسية...</div>
+      <div className="text-slate-500 font-mono animate-pulse uppercase tracking-widest text-xs">{t('dashboard.loading')}</div>
     </div>
   );
 
@@ -73,7 +73,7 @@ export default function DashboardView() {
       <header className="flex justify-between items-center bg-slate-900/50 p-6 border border-border rounded-xl backdrop-blur-md">
         <div>
           <h2 className="text-3xl font-display font-bold text-white tracking-tight">{t('nav.dashboard')}</h2>
-          <p className="text-slate-400 text-sm mt-1">تحديثات فورية للأصول العقارية</p>
+          <p className="text-slate-400 text-sm mt-1">{t('dashboard.subtitle')}</p>
         </div>
         <div className="flex items-center gap-2 text-slate-500 text-xs font-mono bg-slate-950 px-3 py-1.5 rounded border border-border">
           <Calendar className="w-3 h-3" />
@@ -100,9 +100,9 @@ export default function DashboardView() {
           <div className="flex items-center justify-between mb-4">
              <div className="flex items-center gap-2">
                 <TrendingUp className="w-4 h-4 text-primary" />
-                <h3 className="text-xs font-black uppercase tracking-widest text-slate-400">أسعار الصرف اللحظية (USD Reference)</h3>
+                <h3 className="text-xs font-black uppercase tracking-widest text-slate-400">{t('dashboard.rates_title')}</h3>
              </div>
-             <span className="text-[10px] font-mono text-slate-600">تحديث: {new Date(rates.lastUpdated instanceof Timestamp ? rates.lastUpdated.toDate() : rates.lastUpdated).toLocaleTimeString()}</span>
+             <span className="text-[10px] font-mono text-slate-600">{t('dashboard.last_updated')}: {new Date(rates.lastUpdated instanceof Timestamp ? rates.lastUpdated.toDate() : rates.lastUpdated).toLocaleTimeString()}</span>
           </div>
           <div className="flex gap-8">
              <div className="flex flex-col">
@@ -114,7 +114,7 @@ export default function DashboardView() {
                 <span className="text-xl font-display font-bold text-white">{rates.rates.SAR?.toLocaleString()} <span className="text-[10px] text-slate-500">SAR</span></span>
              </div>
              <div className="flex-1 flex items-center justify-end">
-                <div className="px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded text-[10px] text-emerald-500 font-bold uppercase tracking-widest">مفعلة وتلقائية</div>
+                <div className="px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded text-[10px] text-emerald-500 font-bold uppercase tracking-widest">{t('dashboard.rates_active')}</div>
              </div>
           </div>
         </div>
@@ -126,13 +126,13 @@ export default function DashboardView() {
           <div className="flex items-center justify-between mb-8">
              <div className="flex items-center gap-3">
                <TrendingUp className="w-5 h-5 text-primary" />
-               <h3 className="text-lg font-display font-bold text-white uppercase tracking-tight">نظرة عامة على الإيرادات</h3>
+               <h3 className="text-lg font-display font-bold text-white uppercase tracking-tight">{t('dashboard.revenue_overview')}</h3>
              </div>
              <span className="text-[10px] font-mono text-slate-500 border border-border px-2 py-0.5 rounded uppercase">Experimental</span>
           </div>
           <div className="flex flex-col items-center justify-center h-[200px] border border-dashed border-border rounded-xl bg-slate-950/20">
             <TrendingUp className="w-12 h-12 text-slate-800 mb-4" />
-            <p className="text-slate-600 font-medium text-sm">سيتم تفعيل الرسوم البيانية الهندسية عند اكتمال البيانات</p>
+            <p className="text-slate-600 font-medium text-sm">{t('dashboard.charts_pending')}</p>
           </div>
         </div>
         
@@ -144,12 +144,12 @@ export default function DashboardView() {
           <div className="space-y-6">
             {stats.expiringSoon === 0 ? (
               <div className="text-center py-12 border border-dashed border-border rounded-xl">
-                <p className="text-slate-600 font-medium italic">لا توجد عقود تنتهي قريباً ضمن النطاق الهندسي المحدد</p>
+                <p className="text-slate-600 font-medium italic">{t('dashboard.no_expiring')}</p>
               </div>
             ) : (
               <div className="bg-amber-500/5 border border-amber-500/10 p-5 rounded-xl">
                 <p className="text-slate-300 font-medium leading-relaxed">
-                  هناك <span className="text-amber-400 font-bold text-xl px-1">{stats.expiringSoon}</span> عقود تقترب من نقطة النهاية. يوصى بالمراجعة الفورية لضمان الاستقرار.
+                  {t('dashboard.expiring_msg')} <span className="text-amber-400 font-bold text-xl px-1">{stats.expiringSoon}</span>.
                 </p>
               </div>
             )}
@@ -159,7 +159,7 @@ export default function DashboardView() {
                   <div className="h-full bg-primary w-[65%]" />
                </div>
                <div className="flex justify-between text-[10px] font-mono text-slate-500 uppercase tracking-tighter">
-                  <span>نسبة الإشغال الحالية</span>
+                  <span>{t('dashboard.occupancy_current')}</span>
                   <span>65% Target</span>
                </div>
             </div>

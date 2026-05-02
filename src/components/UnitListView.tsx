@@ -35,7 +35,7 @@ export default function UnitListView() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('هل أنت متأكد من حذف هذه الوحدة؟')) return;
+    if (!confirm(t('unit.delete_confirm'))) return;
     try {
       await deleteUnit(id);
     } catch (err) {
@@ -57,7 +57,7 @@ export default function UnitListView() {
       <header className="flex justify-between items-center bg-slate-900/50 p-6 border border-border rounded-xl backdrop-blur-md">
         <div>
           <h2 className="text-3xl font-display font-bold text-white tracking-tight">{t('nav.units')}</h2>
-          <p className="text-slate-400 text-sm mt-1">تتبع حالة ومواصفات الوحدات العقارية</p>
+          <p className="text-slate-400 text-sm mt-1">{t('unit.subtitle')}</p>
         </div>
         <button 
           disabled={properties.length === 0}
@@ -73,8 +73,8 @@ export default function UnitListView() {
         <div className="bg-amber-500/5 border border-amber-500/20 p-5 rounded-xl flex gap-4 text-amber-500 items-start">
           <Info className="w-6 h-6 flex-shrink-0" />
           <div>
-             <p className="font-bold text-sm uppercase tracking-wide">تنبيه هندسي</p>
-             <p className="text-xs opacity-80 mt-1">يجب إضافة عقار واحد على الأقل قبل إضافة الوحدات لضمان توازن الهيكل التنظيمي.</p>
+             <p className="font-bold text-sm uppercase tracking-wide">{t('unit.alert_title')}</p>
+             <p className="text-xs opacity-80 mt-1">{t('unit.add_alert')}</p>
           </div>
         </div>
       )}
@@ -96,7 +96,7 @@ export default function UnitListView() {
                   onChange={e => setFormData({ ...formData, propertyId: e.target.value })}
                   className="w-full px-4 py-3 bg-black border border-border rounded-lg text-white focus:ring-2 focus:ring-primary outline-none appearance-none"
                 >
-                  <option value="">اختر العقار المعني</option>
+                  <option value="">{t('unit.select_property')}</option>
                   {properties.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                 </select>
               </div>
@@ -122,7 +122,7 @@ export default function UnitListView() {
                 </select>
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">المساحة الإجمالية</label>
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{t('unit.area')}</label>
                 <div className="relative">
                   <input 
                     type="number"
@@ -130,7 +130,7 @@ export default function UnitListView() {
                     onChange={e => setFormData({ ...formData, area: Number(e.target.value) })}
                     className="w-full px-4 py-3 bg-black border border-border rounded-lg text-white font-mono focus:ring-2 focus:ring-primary outline-none"
                   />
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[10px] text-slate-600 font-black">M²</span>
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[10px] text-slate-600 font-black">{t('unit.area_unit')}</span>
                 </div>
               </div>
               <div className="space-y-2">
@@ -182,7 +182,7 @@ export default function UnitListView() {
               <th className="px-8 py-5 text-[10px] font-black text-slate-500 uppercase tracking-widest">{t('nav.properties')}</th>
               <th className="px-8 py-5 text-[10px] font-black text-slate-500 uppercase tracking-widest">{t('unit.status')}</th>
               <th className="px-8 py-5 text-[10px] font-black text-slate-500 uppercase tracking-widest">{t('unit.rent')}</th>
-              <th className="px-8 py-5 text-[10px] font-black text-slate-500 uppercase tracking-widest">إجراءات</th>
+              <th className="px-8 py-5 text-[10px] font-black text-slate-500 uppercase tracking-widest">{t('unit.header_actions')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border bg-slate-900/30">
@@ -194,7 +194,7 @@ export default function UnitListView() {
               ))
             ) : units.length === 0 ? (
                <tr>
-                 <td colSpan={5} className="px-8 py-20 text-center text-slate-600 font-bold italic">لا توجد وحدات نشطة ضمن الهيكل الحالي</td>
+                 <td colSpan={5} className="px-8 py-20 text-center text-slate-600 font-bold italic">{t('unit.list_empty')}</td>
                </tr>
             ) : (
               units.map(unit => {
